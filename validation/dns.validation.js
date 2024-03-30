@@ -1,5 +1,15 @@
 const Joi = require('joi')
 
+const domainSchema = {
+    domainPost: Joi.object().keys({
+        name: Joi.string().required(),
+        comment: Joi.string().optional()
+    }),
+    domainUpdate: Joi.object().keys({
+        comment: Joi.string(),
+    })
+}
+
 const dnsSchema = {
     dnsPost: Joi.object().keys({
         name: Joi.string().required(),
@@ -21,4 +31,7 @@ const dnsSchema = {
     })
 }
 
-module.exports = dnsSchema
+module.exports = {
+    domainSchema,
+    dnsSchema
+}

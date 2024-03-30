@@ -10,6 +10,83 @@ AWS.config.update({
 const route53 = new AWS.Route53();
 const hostedZoneId = "Z04391383RRGTNPDDFACG";
 
+const getDomains = async () => {
+    try {
+      const data = await route53.listHostedZones({}).promise();
+      const domains = data.HostedZones
+      return domains
+    }catch(error) {
+      throw error
+    }
+}
+
+const getDomainDetails = async (hostedZoneId) => {
+  try {
+    const params = {
+      Id: `/hostedzone/${hostedZoneId}`
+    };
+    const data = await route53.getHostedZone(params).promise();
+    if(!data) {
+      throw new ApiError(404, 'Domain not found')
+    }
+    const domain = {
+      id: data.HostedZone.Id.split('/').pop(),
+      name: data.HostedZone.Name.replace(/\.$/, ''),
+      comment: data.HostedZone.Config && data.HostedZone.Config.Comment,
+      resourceRecordSetCount: data.HostedZone.ResourceRecordSetCount,
+      nameServers: data.DelegationSet.NameServers
+    };
+    
+    return domain
+  }catch(error) {
+    throw error
+  }
+}
+
+const createDomain = async (domainBody) => {
+  const params = {
+    Name: domainBody.name,
+    CallerReference: `${Date.now()}`,
+
+    HostedZoneConfig: {
+      Comment: domainBody.comment
+    }
+  };
+  const data = await route53.createHostedZone(params).promise();
+  const domain = {
+    id: data.HostedZone.Id.split('/').pop(),
+    name: data.HostedZone.Name.replace(/\.$/, ''),
+    comment: data.HostedZone.Config && data.HostedZone.Config.Comment 
+  };
+  return domain
+}
+
+const updateDomain = async (hostedZoneId, domainBody) => {
+  const params = {
+    Id: `/hostedzone/${hostedZoneId}`,
+    Comment: domainBody.comment
+    
+  };
+  const domain = await getDomainDetails(hostedZoneId)
+  if(!domain) {
+    throw new ApiError(404, 'Domain with this hosted zone id not found')
+  }
+  await route53.updateHostedZoneComment(params).promise();
+  return 'update successful'
+}
+
+const deleteDomain = async (hostedZoneId) => {
+  const domain = await getDomainDetails(hostedZoneId)
+  if(!domain) {
+    throw new ApiError(404, 'Domain with this hosted zone id not found')
+  }
+  const params = {
+    Id: `/hostedzone/${hostedZoneId}`
+  };
+  await route53.deleteHostedZone(params).promise();
+  return 'delete successful'
+}
+
 const getDns = async () => {
   try {
     const data = await route53
@@ -17,7 +94,6 @@ const getDns = async () => {
       .promise();
     return data.ResourceRecordSets;
   } catch (error) {
-    console.error("Error listing hosted zones:", error);
     throw error;
   }
 };
@@ -140,6 +216,11 @@ async function checkDns(name, type) {
 }
 
 module.exports = {
+  getDomains,
+  getDomainDetails,
+  createDomain,
+  updateDomain,
+  deleteDomain,
   getDns,
   createDns,
   editDns,
