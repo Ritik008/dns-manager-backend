@@ -1,4 +1,5 @@
 const AWS = require("aws-sdk");
+const ApiError = require("../utils/ApiError");
 
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -23,6 +24,10 @@ const getDns = async () => {
 
 const createDns = async ({ name, type, value, ttl }) => {
   try {
+    const existingRecord = await checkDns(name, type)
+    if(existingRecord) {
+      throw new ApiError(400, 'Dns already exists')
+    }
     name += ".www.helloworld.com";
     const params = {
       ChangeBatch: {
@@ -44,27 +49,21 @@ const createDns = async ({ name, type, value, ttl }) => {
     const data = await route53.changeResourceRecordSets(params).promise();
     return data;
   } catch (error) {
-    console.error("Error creating hosted zone:", error);
     throw error;
   }
 };
 
 const editDns = async ({ recordName, recordType, value, ttl }) => {
   try {
-    const existingRecordParams = {
-      HostedZoneId: hostedZoneId,
-      StartRecordName: recordName,
-      StartRecordType: recordType,
-    };
-    const existingRecordResponse = await route53
-      .listResourceRecordSets(existingRecordParams)
-      .promise();
-    const existingRecord = existingRecordResponse.ResourceRecordSets[0];
+    const existingRecord = await checkDns(recordName, recordType)
+    if(!existingRecord) {
+      throw new ApiError(404, 'Dns does not exists')
+    }
     const changes = [
       {
         Action: "UPSERT",
         ResourceRecordSet: {
-          Name: existingRecord.Name+".www.helloworld.com",
+          Name: existingRecord.Name,
           Type: existingRecord.Type,
           TTL: ttl || existingRecord.TTL,
           ResourceRecords: [{ Value: value || existingRecord.ResourceRecords }],
@@ -84,13 +83,16 @@ const editDns = async ({ recordName, recordType, value, ttl }) => {
 
     return changeResponse;
   } catch (error) {
-    console.error("Error creating hosted zone:", error);
     throw error;
   }
 };
 
 const deleteDns = async ({ recordName, recordType, ttl, value }) => {
   try {
+    const dnsExists = await checkDns(recordName, recordType) 
+    if(!dnsExists){
+      throw new ApiError(404, 'Dns does not exists')
+    }
     const changeParams = {
       ChangeBatch: {
         Changes: [
@@ -122,6 +124,20 @@ const deleteDns = async ({ recordName, recordType, ttl, value }) => {
     throw error;
   }
 };
+
+async function checkDns(name, type) {
+  const existingRecordParams = {
+    HostedZoneId: hostedZoneId,
+    StartRecordName: name+".www.helloworld.com",
+    StartRecordType: type,
+    MaxItems: '1'
+  };
+  const existingRecordResponse = await route53
+    .listResourceRecordSets(existingRecordParams)
+    .promise();
+  const existingRecord = existingRecordResponse.ResourceRecordSets[0];
+  return existingRecord
+}
 
 module.exports = {
   getDns,
