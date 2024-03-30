@@ -53,8 +53,38 @@ const getDnsRecords = async (req, res, next) => {
   const domainId = req.params.domainId;
   try {
     const records = await dnsService.getDnsRecords(domainId);
-    res.json(records);
+    res.status(200).json(records);
   } catch (error) {
+    next(error)
+  }
+}
+
+const createDNSRecord = async (req, res, next) => {
+  const domainId = req.params.domainId
+  try {
+    const record = await dnsService.createDNSRecord(req.body, domainId)
+    res.status(200).json(record)
+  }catch(error) {
+    next(error)
+  }
+}
+
+const editDNSRecord = async (req, res, next) => {
+  try {
+    const domainId = req.params.domainId
+    const record = await dnsService.editDNSRecord(req.body, domainId)
+    res.status(200).json(record)
+  }catch(error) {
+    next(error)
+  }
+}
+
+const deleteDNSRecord = async (req, res, next) => {
+  try { 
+    const domainId = req.params.domainId;
+    const record = await dnsService.deleteDNSRecord(domainId, req.body)
+    res.status(200).json(record)
+  }catch(error) {
     next(error)
   }
 }
@@ -79,5 +109,8 @@ module.exports = {
   updateDomain,
   deleteDomain,
   getDnsRecords,
-  getDnsRecordById
+  createDNSRecord,
+  getDnsRecordById,
+  editDNSRecord,
+  deleteDNSRecord
 };

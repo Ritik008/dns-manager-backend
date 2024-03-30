@@ -14,20 +14,20 @@ const dnsSchema = {
     dnsPost: Joi.object().keys({
         name: Joi.string().required(),
         type: Joi.string().required(),
-        value: Joi.string().required(),
+        values: Joi.array().items(Joi.string()).required(),
         ttl: Joi.string().required()
     }),
     dnsEdit: Joi.object().keys({
-        recordName: Joi.string().required(),
-        recordType: Joi.string().required(),
-        value: Joi.string(),
+        name: Joi.string(),
+        type: Joi.string(),
+        values: Joi.array().items(Joi.string()),
         ttl: Joi.string()
     }),
     dnsDelete: Joi.object().keys({
-        recordName: Joi.string().required(),
-        recordType: Joi.string().required(),
+        name: Joi.string().required(),
+        type: Joi.string().required(),
         ttl: Joi.string().required(),
-        value: Joi.string().required(),
+        values: Joi.array().items(Joi.string()),
     })
 }
 

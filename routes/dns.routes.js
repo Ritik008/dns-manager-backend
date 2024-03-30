@@ -17,10 +17,10 @@ router.get("/domains/:domainId/records", dnsController.getDnsRecords);
 
 router.get('/domains/:domainId/records/:recordId', dnsController.getDnsRecordById);
 
-// router.post("/",validator(dnsValidation.dnsSchema.dnsPost), dnsController.createDns);
+router.post('/domains/:domainId/records', validator(dnsValidation.dnsSchema.dnsPost), dnsController.createDNSRecord)
 
-// router.put("/", validator(dnsValidation.dnsSchema.dnsEdit), dnsController.editDns);
+router.put('/domains/:domainId/records', validator(dnsValidation.dnsSchema.dnsEdit), dnsController.editDNSRecord)
 
-// router.delete("/", dnsController.deleteDns);
+router.delete('/domains/:domainId/records', validator(dnsValidation.dnsSchema.dnsDelete), dnsController.deleteDNSRecord)
 
 module.exports = router;
