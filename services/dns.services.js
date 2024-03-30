@@ -11,37 +11,37 @@ const route53 = new AWS.Route53();
 const hostedZoneId = "Z04391383RRGTNPDDFACG";
 
 const getDomains = async () => {
-    try {
-      const data = await route53.listHostedZones({}).promise();
-      const domains = data.HostedZones
-      return domains
-    }catch(error) {
-      throw error
-    }
-}
+  try {
+    const data = await route53.listHostedZones({}).promise();
+    const domains = data.HostedZones;
+    return domains;
+  } catch (error) {
+    throw error;
+  }
+};
 
 const getDomainDetails = async (hostedZoneId) => {
   try {
     const params = {
-      Id: `/hostedzone/${hostedZoneId}`
+      Id: `/hostedzone/${hostedZoneId}`,
     };
     const data = await route53.getHostedZone(params).promise();
-    if(!data) {
-      throw new ApiError(404, 'Domain not found')
+    if (!data) {
+      throw new ApiError(404, "Domain not found");
     }
     const domain = {
-      id: data.HostedZone.Id.split('/').pop(),
-      name: data.HostedZone.Name.replace(/\.$/, ''),
+      id: data.HostedZone.Id.split("/").pop(),
+      name: data.HostedZone.Name.replace(/\.$/, ""),
       comment: data.HostedZone.Config && data.HostedZone.Config.Comment,
       resourceRecordSetCount: data.HostedZone.ResourceRecordSetCount,
-      nameServers: data.DelegationSet.NameServers
+      nameServers: data.DelegationSet.NameServers,
     };
-    
-    return domain
-  }catch(error) {
-    throw error
+
+    return domain;
+  } catch (error) {
+    throw error;
   }
-}
+};
 
 const createDomain = async (domainBody) => {
   const params = {
@@ -49,60 +49,91 @@ const createDomain = async (domainBody) => {
     CallerReference: `${Date.now()}`,
 
     HostedZoneConfig: {
-      Comment: domainBody.comment
-    }
+      Comment: domainBody.comment,
+    },
   };
   const data = await route53.createHostedZone(params).promise();
   const domain = {
-    id: data.HostedZone.Id.split('/').pop(),
-    name: data.HostedZone.Name.replace(/\.$/, ''),
-    comment: data.HostedZone.Config && data.HostedZone.Config.Comment 
+    id: data.HostedZone.Id.split("/").pop(),
+    name: data.HostedZone.Name.replace(/\.$/, ""),
+    comment: data.HostedZone.Config && data.HostedZone.Config.Comment,
   };
-  return domain
-}
+  return domain;
+};
 
 const updateDomain = async (hostedZoneId, domainBody) => {
   const params = {
     Id: `/hostedzone/${hostedZoneId}`,
-    Comment: domainBody.comment
-    
+    Comment: domainBody.comment,
   };
-  const domain = await getDomainDetails(hostedZoneId)
-  if(!domain) {
-    throw new ApiError(404, 'Domain with this hosted zone id not found')
+  const domain = await getDomainDetails(hostedZoneId);
+  if (!domain) {
+    throw new ApiError(404, "Domain with this hosted zone id not found");
   }
   await route53.updateHostedZoneComment(params).promise();
-  return 'update successful'
-}
+  return "update successful";
+};
 
 const deleteDomain = async (hostedZoneId) => {
-  const domain = await getDomainDetails(hostedZoneId)
-  if(!domain) {
-    throw new ApiError(404, 'Domain with this hosted zone id not found')
+  const domain = await getDomainDetails(hostedZoneId);
+  if (!domain) {
+    throw new ApiError(404, "Domain with this hosted zone id not found");
   }
   const params = {
-    Id: `/hostedzone/${hostedZoneId}`
+    Id: `/hostedzone/${hostedZoneId}`,
   };
   await route53.deleteHostedZone(params).promise();
-  return 'delete successful'
-}
+  return "delete successful";
+};
 
-const getDns = async () => {
+const getDnsRecords = async (domainId) => {
   try {
-    const data = await route53
-      .listResourceRecordSets({ HostedZoneId: hostedZoneId })
-      .promise();
-    return data.ResourceRecordSets;
+    const params = {
+      HostedZoneId: domainId,
+    };
+    const data = await route53.listResourceRecordSets(params).promise();
+
+    const records = data.ResourceRecordSets.map((recordSet) => {
+      return {
+        name: recordSet.Name.replace(/\.$/, ""), // Remove trailing dot
+        type: recordSet.Type,
+        ttl: recordSet.TTL,
+        values: recordSet.ResourceRecords.map((record) => record.Value),
+      };
+    });
+    return data;
   } catch (error) {
     throw error;
   }
 };
 
+const getDnsRecordById = async (domainId, recordId) => {
+  const params = {
+    HostedZoneId: domainId,
+  };
+  const data = await route53.listResourceRecordSets(params).promise();
+  const record = data.ResourceRecordSets.find(
+    (recordSet) => recordSet.Name.replace(/\.$/, '') === recordId
+  );
+
+  if (!record) {
+    throw new ApiError(404, 'DNS record not found')
+  }
+
+  const dnsRecord = {
+    name: record.Name.replace(/\.$/, ""),
+    type: record.Type,
+    ttl: record.TTL,
+    values: record.ResourceRecords.map((record) => record.Value),
+  };
+  return dnsRecord;
+};
+
 const createDns = async ({ name, type, value, ttl }) => {
   try {
-    const existingRecord = await checkDns(name, type)
-    if(existingRecord) {
-      throw new ApiError(400, 'Dns already exists')
+    const existingRecord = await checkDns(name, type);
+    if (existingRecord) {
+      throw new ApiError(400, "Dns already exists");
     }
     name += ".www.helloworld.com";
     const params = {
@@ -131,9 +162,9 @@ const createDns = async ({ name, type, value, ttl }) => {
 
 const editDns = async ({ recordName, recordType, value, ttl }) => {
   try {
-    const existingRecord = await checkDns(recordName, recordType)
-    if(!existingRecord) {
-      throw new ApiError(404, 'Dns does not exists')
+    const existingRecord = await checkDns(recordName, recordType);
+    if (!existingRecord) {
+      throw new ApiError(404, "Dns does not exists");
     }
     const changes = [
       {
@@ -165,9 +196,9 @@ const editDns = async ({ recordName, recordType, value, ttl }) => {
 
 const deleteDns = async ({ recordName, recordType, ttl, value }) => {
   try {
-    const dnsExists = await checkDns(recordName, recordType) 
-    if(!dnsExists){
-      throw new ApiError(404, 'Dns does not exists')
+    const dnsExists = await checkDns(recordName, recordType);
+    if (!dnsExists) {
+      throw new ApiError(404, "Dns does not exists");
     }
     const changeParams = {
       ChangeBatch: {
@@ -175,7 +206,7 @@ const deleteDns = async ({ recordName, recordType, ttl, value }) => {
           {
             Action: "DELETE",
             ResourceRecordSet: {
-              Name: recordName+".www.helloworld.com",
+              Name: recordName + ".www.helloworld.com",
               Type: recordType,
               TTL: ttl,
               ResourceRecords: [
@@ -184,7 +215,6 @@ const deleteDns = async ({ recordName, recordType, ttl, value }) => {
                 },
               ],
             },
-           
           },
         ],
       },
@@ -204,15 +234,15 @@ const deleteDns = async ({ recordName, recordType, ttl, value }) => {
 async function checkDns(name, type) {
   const existingRecordParams = {
     HostedZoneId: hostedZoneId,
-    StartRecordName: name+".www.helloworld.com",
+    StartRecordName: name + ".www.helloworld.com",
     StartRecordType: type,
-    MaxItems: '1'
+    MaxItems: "1",
   };
   const existingRecordResponse = await route53
     .listResourceRecordSets(existingRecordParams)
     .promise();
   const existingRecord = existingRecordResponse.ResourceRecordSets[0];
-  return existingRecord
+  return existingRecord;
 }
 
 module.exports = {
@@ -221,7 +251,8 @@ module.exports = {
   createDomain,
   updateDomain,
   deleteDomain,
-  getDns,
+  getDnsRecords,
+  getDnsRecordById,
   createDns,
   editDns,
   deleteDns,

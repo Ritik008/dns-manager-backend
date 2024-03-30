@@ -13,12 +13,14 @@ router.put('/domains/:id', validator(dnsValidation.domainSchema.domainUpdate), d
 
 router.delete('/domains/:id', dnsController.deleteDomain)
 
-router.get("/", dnsController.getDns);
+router.get("/domains/:domainId/records", dnsController.getDnsRecords);
 
-router.post("/",validator(dnsValidation.dnsSchema.dnsPost), dnsController.createDns);
+router.get('/domains/:domainId/records/:recordId', dnsController.getDnsRecordById);
 
-router.put("/", validator(dnsValidation.dnsSchema.dnsEdit), dnsController.editDns);
+// router.post("/",validator(dnsValidation.dnsSchema.dnsPost), dnsController.createDns);
 
-router.delete("/", dnsController.deleteDns);
+// router.put("/", validator(dnsValidation.dnsSchema.dnsEdit), dnsController.editDns);
+
+// router.delete("/", dnsController.deleteDns);
 
 module.exports = router;
