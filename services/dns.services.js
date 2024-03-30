@@ -64,7 +64,7 @@ const editDns = async ({ recordName, recordType, value, ttl }) => {
       {
         Action: "UPSERT",
         ResourceRecordSet: {
-          Name: existingRecord.Name,
+          Name: existingRecord.Name+".www.helloworld.com",
           Type: existingRecord.Type,
           TTL: ttl || existingRecord.TTL,
           ResourceRecords: [{ Value: value || existingRecord.ResourceRecords }],
@@ -97,7 +97,7 @@ const deleteDns = async ({ recordName, recordType, ttl, value }) => {
           {
             Action: "DELETE",
             ResourceRecordSet: {
-              Name: recordName,
+              Name: recordName+".www.helloworld.com",
               Type: recordType,
               TTL: ttl,
               ResourceRecords: [
