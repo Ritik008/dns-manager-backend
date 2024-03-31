@@ -1,7 +1,10 @@
 const { dnsController } = require("../controller");
 const validator = require("../middleware/validation");
 const { dnsValidation } = require("../validation");
+const multer = require('multer')
 const router = require("express").Router();
+
+const upload = multer({ dest: 'uploads/' });
 
 router.get('/domains', dnsController.getDomains)
 
@@ -22,5 +25,7 @@ router.post('/domains/:domainId/records', validator(dnsValidation.dnsSchema.dnsP
 router.put('/domains/:domainId/records', validator(dnsValidation.dnsSchema.dnsEdit), dnsController.editDNSRecord)
 
 router.delete('/domains/:domainId/records', validator(dnsValidation.dnsSchema.dnsDelete), dnsController.deleteDNSRecord)
+
+router.post('/domains/upload', upload.single('file'), dnsController.uploadBulkDomainData)
 
 module.exports = router;
