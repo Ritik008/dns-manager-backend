@@ -109,43 +109,47 @@ const uploadBulkDomainData = async (req, res, next) => {
     }
 
     const fileExtension = req.file.originalname.split(".").pop().toLowerCase();
-    if (fileExtension !== "csv" && fileExtension !== "json") {
+    if (fileExtension !== "json") {
       return next(
-        createError(
-          400,
-          "Invalid file format. Please upload a CSV or JSON file"
-        )
+        createError(400, "Invalid file format. Please upload a JSON file")
       );
     }
 
-    if (fileExtension === "csv") {
-      let domains = [];
-      fs.createReadStream(req.file.path)
-        .pipe(csv({headers: false}))
-        .on("data", (data) => {
-          domains.push(data)
-        })
-        .on("end", () => {
-          fs.unlinkSync(req.file.path);
-          domains.map(async (domain) => {
-            await dnsService.createDomain({name: domain['0'].trim()});
-          });
-          res
-            .status(200)
-            .json({ message: "Domain data uploaded successfully" });
-        });
+    const domains = JSON.parse(fs.readFileSync(req.file.path, "utf-8"));
+
+    fs.unlinkSync(req.file.path);
+    domains.forEach(async (domain) => {
+      await dnsService.createDomain(domain);
+    });
+
+    res.status(200).json({ message: "Domain data uploaded successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const uploadBulkDNSRecordData = async (req, res, next) => {
+  const domainId = req.params.id
+  try {
+    if (!req.file) {
+      return next(createError(400, "No file provided"));
     }
 
-    if (fileExtension === "json") {
-      const domains = JSON.parse(fs.readFileSync(req.file.path, "utf-8"));
-
-      fs.unlinkSync(req.file.path);
-      domains.forEach(async (domain) => {
-        await dnsService.createDomain(domain);
-      });
-
-      res.status(200).json({ message: "Domain data uploaded successfully" });
+    const fileExtension = req.file.originalname.split(".").pop().toLowerCase();
+    if (fileExtension !== "json") {
+      return next(
+        createError(400, "Invalid file format. Please upload a JSON file")
+      );
     }
+    const domains = JSON.parse(fs.readFileSync(req.file.path, "utf-8"));
+
+    fs.unlinkSync(req.file.path);
+    const promises = []
+    domains.forEach(async (domain) => { 
+      promises.push(dnsService.createDNSRecord(domain, domainId))
+    });
+    await Promise.all(promises)
+    res.status(200).json({ message: "Domain data uploaded successfully" });
   } catch (error) {
     next(error);
   }
@@ -163,4 +167,5 @@ module.exports = {
   editDNSRecord,
   deleteDNSRecord,
   uploadBulkDomainData,
+  uploadBulkDNSRecordData,
 };

@@ -28,4 +28,6 @@ router.delete('/domains/:domainId/records', validator(dnsValidation.dnsSchema.dn
 
 router.post('/domains/upload', upload.single('file'), dnsController.uploadBulkDomainData)
 
+router.post('/domains/:id/record/upload', upload.single('file'), dnsController.uploadBulkDNSRecordData)
+
 module.exports = router;

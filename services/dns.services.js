@@ -111,24 +111,30 @@ const getDnsRecordById = async (domainId, recordId) => {
     HostedZoneId: domainId,
   };
   const data = await route53.listResourceRecordSets(params).promise();
+  if (!data) {
+    throw new ApiError(404, 'Domain not found')
+  }
   const record = data.ResourceRecordSets.find(
     (recordSet) => recordSet.Name.replace(/\.$/, '') === recordId
-  );
-
-  if (!record) {
-    throw new ApiError(404, 'DNS record not found')
+  )
+  let dnsRecord = null
+  if(record !== undefined) {
+    dnsRecord = {
+      name: record?.Name.replace(/\.$/, ""),
+      type: record?.Type,
+      ttl: record?.TTL,
+      values: record?.ResourceRecords.map((record) => record.Value),
+    };
   }
-
-  const dnsRecord = {
-    name: record.Name.replace(/\.$/, ""),
-    type: record.Type,
-    ttl: record.TTL,
-    values: record.ResourceRecords.map((record) => record.Value),
-  };
+  
   return dnsRecord;
 };
 
 const createDNSRecord = async (domainBody, domainId) => {
+  const dns = await getDnsRecordById(domainId, domainBody.name)
+  if(dns) {
+    throw new ApiError(400, 'DNS already exists')
+  }
   const params = {
     HostedZoneId: domainId,
     ChangeBatch: {
@@ -184,6 +190,7 @@ const deleteDNSRecord = async (domainId, domainBody) => {
   await route53.changeResourceRecordSets(params).promise();
   return 'dns deleted'
 }
+
 
 
 module.exports = {
