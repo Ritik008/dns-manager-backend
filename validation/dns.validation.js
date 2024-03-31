@@ -22,7 +22,7 @@ const dnsSchema = {
     }),
     dnsEdit: Joi.object().keys({
         name: Joi.string(),
-        type: Joi.string(...allowedTypes),
+        type: Joi.string().allow(...allowedTypes),
         values: Joi.array().items(Joi.string()),
         ttl: Joi.string()
     }),
