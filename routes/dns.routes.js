@@ -36,8 +36,11 @@ router.put('/domains/:domainId/records',  validator(dnsValidation.dnsSchema.dnsE
 
 router.delete('/domains/:domainId/records',  validator(dnsValidation.dnsSchema.dnsDelete), dnsController.deleteDNSRecord)
 
-router.post('/domains/upload',  upload.single('file'), dnsController.uploadBulkDomainData)
 
-router.post('/domains/:id/record/upload',  upload.single('file'), dnsController.uploadBulkDNSRecordData)
+// The code works fine locally but encounters issues when deployed to Vercel.
+
+// router.post('/domains/upload',  upload.single('file'), dnsController.uploadBulkDomainData)
+
+// router.post('/domains/:id/record/upload',  upload.single('file'), dnsController.uploadBulkDNSRecordData)
 
 module.exports = router;
