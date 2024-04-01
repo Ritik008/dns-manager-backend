@@ -8,6 +8,7 @@ const cors = require('cors')
 
 const app = express();
 
+connection()
 app.use(express.json())
 app.use(morgan('dev'))
 app.use(cors())
@@ -32,6 +33,5 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
-  connection()
   console.log(`Server is up at ${port}`);
 });
