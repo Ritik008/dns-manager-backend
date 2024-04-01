@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const connection = require('./config/db')
 const dnsRoutes = require('./routes');
 const { createError } = require("./utils/error");
 const morgan = require("morgan");
@@ -31,5 +32,6 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 8000;
 app.listen(port, () => {
+  connection()
   console.log(`Server is up at ${port}`);
 });

@@ -107,22 +107,22 @@ const uploadBulkDomainData = async (req, res, next) => {
     if (!req.file) {
       return next(createError(400, "No file provided"));
     }
-
     const fileExtension = req.file.originalname.split(".").pop().toLowerCase();
     if (fileExtension !== "json") {
       return next(
         createError(400, "Invalid file format. Please upload a JSON file")
       );
     }
-
-    const domains = JSON.parse(fs.readFileSync(req.file.path, "utf-8"));
-
+    let fileContent = fs.readFileSync(req.file.path, 'utf-8')
+    fileContent = fileContent.replace(/\s/g, '');
+    const domains = JSON.parse(fileContent)
     fs.unlinkSync(req.file.path);
     domains.forEach(async (domain) => {
       await dnsService.createDomain(domain);
     });
 
     res.status(200).json({ message: "Domain data uploaded successfully" });
+    window.location.reload()
   } catch (error) {
     next(error);
   }
