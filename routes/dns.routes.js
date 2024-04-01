@@ -5,7 +5,7 @@ const { dnsValidation } = require("../validation");
 const multer = require('multer')
 const router = require("express").Router();
 
-const upload = multer({ dest: 'uploads/' });
+// const upload = multer({ dest: 'uploads/' });
 
 
 
