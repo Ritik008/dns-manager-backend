@@ -3,6 +3,7 @@ const { createError } = require("../utils/error");
 const fs = require("fs");
 const csv = require("csv-parser");
 
+
 const getDomains = async (req, res, next) => {
   try {
     const domains = await dnsService.getDomains();

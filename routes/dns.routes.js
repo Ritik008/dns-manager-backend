@@ -5,7 +5,16 @@ const { dnsValidation } = require("../validation");
 const multer = require('multer')
 const router = require("express").Router();
 
-const upload = multer({ dest: 'uploads/' });
+const os = require('os');
+
+const storage = multer.diskStorage({
+  destination: os.tmpdir(),
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  }
+});
+
+const upload = multer({ storage: storage });
 
 router.get('/domains',  dnsController.getDomains)
 
