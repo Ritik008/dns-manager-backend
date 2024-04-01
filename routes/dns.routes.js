@@ -5,16 +5,9 @@ const { dnsValidation } = require("../validation");
 const multer = require('multer')
 const router = require("express").Router();
 
-const os = require('os');
+const upload = multer({ dest: 'uploads/' });
 
-const storage = multer.diskStorage({
-  destination: os.tmpdir(),
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  }
-});
 
-const upload = multer({ storage: storage });
 
 router.get('/domains',  dnsController.getDomains)
 
@@ -35,7 +28,6 @@ router.post('/domains/:domainId/records',  validator(dnsValidation.dnsSchema.dns
 router.put('/domains/:domainId/records',  validator(dnsValidation.dnsSchema.dnsEdit), dnsController.editDNSRecord)
 
 router.delete('/domains/:domainId/records',  validator(dnsValidation.dnsSchema.dnsDelete), dnsController.deleteDNSRecord)
-
 
 // The code works fine locally but encounters issues when deployed to Vercel.
 
