@@ -1,5 +1,6 @@
 const AWS = require("aws-sdk");
 const ApiError = require("../utils/ApiError");
+const Domain = require('../model/domain.model')
 
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -57,6 +58,9 @@ const createDomain = async (domainBody) => {
     name: data.HostedZone.Name.replace(/\.$/, ""),
     comment: data.HostedZone.Config && data.HostedZone.Config.Comment,
   };
+  // Domain.create({
+  //   domainId: data.HostedZone.Id.split("/").pop(),
+  // })
   return domain;
 };
 
