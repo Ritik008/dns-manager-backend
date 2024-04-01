@@ -6,7 +6,7 @@ const allowedTypes = ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'PTR', 'SOA', 'SRV', 'TX
 const domainSchema = {
     domainPost: Joi.object().keys({
         name: Joi.string().required(),
-        comment: Joi.string().optional()
+        comment: Joi.string().allow("").optional()
     }),
     domainUpdate: Joi.object().keys({
         comment: Joi.string(),
